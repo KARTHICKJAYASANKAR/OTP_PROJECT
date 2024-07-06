@@ -1,11 +1,31 @@
-import { useState } from "react"
+import { useState , useEffect} from "react"
 import React from 'react'
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 
 const OtpForm = () => {
 
     const [otp , setOtp] = useState(null)
     const navigate = useNavigate();
+    const [timeLeft, setTimeLeft] = useState(10);
+    const {id} = useParams();
+
+    useEffect(() => {
+        if (timeLeft <= 0) {
+          return;
+        }
+    
+        const intervalId = setInterval(() => {
+          setTimeLeft(timeLeft - 1);
+        }, 1000);
+    
+        return () => clearInterval(intervalId);
+      }, [timeLeft]);
+    
+      const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+      };
   
     
       const handleSubmit = (e) => {
@@ -15,7 +35,20 @@ const OtpForm = () => {
         navigate('/home')
       };
 
-    
+    const resendOTP = async()=>{
+        setTimeLeft(10);
+        const res = await fetch(`http://localhost:5000/sendotp/${id}`,{
+            method:'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }  
+        })
+
+        const data = await res.json();
+        if(res.ok){
+            console.log(data);
+        }
+    }
 
 
   return (
@@ -44,6 +77,13 @@ const OtpForm = () => {
           onChange={(e)=> setOtp(e.target.value)}
           required
         />
+        <p>Time left: {formatTime(timeLeft)}</p>
+        {timeLeft <= 0 && 
+        <div>
+        <p>OTP has expired. Please request a new one.</p>
+        <button className="bg-gray-400 hover:bg-gray-500 transition duration-200 p-2 rounded-lg font-bold" onClick={resendOTP}>Resend</button>
+        </div>
+        }
       </div>
      
   
