@@ -13,7 +13,7 @@ const Body = () => {
         },
 
         {
-            path: '/home',
+            path: '/home/:id',
             element: <Home/>
         },
         

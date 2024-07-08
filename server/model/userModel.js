@@ -6,7 +6,7 @@ const userSchema = mongoose.Schema({
     password:{type:String, required:true},
     profilePic:{type:String, required:true},
     otp:{type:String },
-    isValidated:{type:Boolean}
+    validtime:{type:Date},
 },{
     timestamps:true
 });

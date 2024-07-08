@@ -1,17 +1,22 @@
-import React , {useState} from 'react'
+import React , {useEffect, useState} from 'react'
 import {useNavigate} from 'react-router-dom';
+import validateEmailAndPassword from '../utils/validate';
 const Login = () => {
 
     const navigate = useNavigate();
     const [login , setLogin] = useState(true)
-    const [userid , setUserId] = useState(null);
+    const [errmsg , setErrMsg] = useState("");
+    const [validateMsg , setValidateMsg] = useState("");
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
         profilePic: null,
       });
-    
+
+
+
+
       const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({
@@ -30,6 +35,8 @@ const Login = () => {
       const storeDB = async(imgurl)=>{
 
         try{
+            const message = validateEmailAndPassword(formData.email , formData.password)
+            setValidateMsg(message);
             console.log("image url : " + imgurl);
              
             const response = await fetch(`http://localhost:5000/signup`,{
@@ -44,11 +51,9 @@ const Login = () => {
           console.log("data :" +  data);
           if(data)
           {
-            // console.log(data[1])
-            // console.log(data[0])
             localStorage.setItem("token" , data[1]);
             localStorage.setItem("userid" , data[0]);
-            navigate('/home')
+            navigate(`/otpverify/${data[0]}`);
             //console.log(data);
           }
           else
@@ -99,8 +104,11 @@ const Login = () => {
 
       const handleLogin = async(e)=>{
         e.preventDefault();
+
         try{
             console.log("login api")
+            const message = validateEmailAndPassword(formData.email , formData.password)
+            setValidateMsg(message);
             const response = await fetch(`http://localhost:5000/login`,{
                 method: 'POST',
                 headers:{
@@ -113,8 +121,10 @@ const Login = () => {
                 {
                     localStorage.setItem("token" , data[1]);
                     localStorage.setItem("userid" , data[0]);
-                    setUserId(data[0]);
                     navigate(`/otpverify/${data[0]}`);
+                }
+                else{
+                    setErrMsg("Invalid email or password")
                 }
         }
         catch(e){
@@ -200,7 +210,8 @@ const Login = () => {
           />
         </div>}
 
-
+       {validateMsg!="Validation successful" && <p className='text-red-700'>{validateMsg}</p>}
+       {errmsg!="" && <p className='text-red-700'>{errmsg}</p>}
         <button
           type="submit"
           className="w-full bg-[#729762] text-white py-3 rounded-lg hover:bg-[#658147] transition duration-200"

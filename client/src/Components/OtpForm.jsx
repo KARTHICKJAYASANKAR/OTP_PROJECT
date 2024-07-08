@@ -4,10 +4,15 @@ import { useNavigate, useParams } from "react-router-dom"
 
 const OtpForm = () => {
 
-    const [otp , setOtp] = useState(null)
+    const [otp , setOtp] = useState("")
     const navigate = useNavigate();
-    const [timeLeft, setTimeLeft] = useState(10);
+    const [timeLeft, setTimeLeft] = useState(600);
     const {id} = useParams();
+    const[msg , setMsg] = useState("");
+
+    useEffect(()=>{
+        resendOTP();
+    },[])
 
     useEffect(() => {
         if (timeLeft <= 0) {
@@ -26,29 +31,58 @@ const OtpForm = () => {
         const remainingSeconds = seconds % 60;
         return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
       };
-  
     
-      const handleSubmit = (e) => {
+    
+      const handleSubmit =async (e) => {
         e.preventDefault();
         // Handle form submission
-        console.log(otp);
-        navigate('/home')
-      };
-
-    const resendOTP = async()=>{
-        setTimeLeft(10);
-        const res = await fetch(`http://localhost:5000/sendotp/${id}`,{
-            method:'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }  
+        const res = await fetch("http://localhost:5000/validateotp",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({otp, id , timeLeft})
         })
 
         const data = await res.json();
+        console.log(res);
         if(res.ok){
-            console.log(data);
+            navigate(`/home/${id}`);
         }
-    }
+        else{
+            setMsg("OTP failed or Expired")
+        }
+      };
+
+
+      const resendOTP = async () => {
+        try {
+            // Reset the timer
+            setTimeLeft(600);
+            setMsg("");
+            setOtp("")
+    
+            // Make the fetch request
+            const res = await fetch(`http://localhost:5000/sendotp/${id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            // Parse the JSON response
+            const data = await res.json();
+    
+            // Handle the response
+            if (res.ok) {
+                console.log(data);
+            } else {
+                console.error('Failed to resend OTP:', data);
+            }
+        } catch (error) {
+            // Catch and log any errors
+            console.error('Error resending OTP:', error);
+        }
+    };
+    
 
 
   return (
@@ -95,6 +129,7 @@ const OtpForm = () => {
       >
         Verify
       </button>
+      <p className="text-red-700">{msg}</p>
     </form>
   </div>
   )
